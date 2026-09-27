@@ -3,6 +3,8 @@ plugins {
 	id 'maven-publish'
 }
 
+version = "${project.version}+${project.minecraft_version}"
+
 repositories {
 }
 
