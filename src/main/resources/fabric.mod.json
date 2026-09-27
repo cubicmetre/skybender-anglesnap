@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"id": "skybender-anglesnap",
+	"version": "${version}",
+	"name": "Skybender AngleSnap",
+	"description": "Client /skybend command that encodes nuke origin/target and plays the Scarpet look sequence",
+	"authors": ["Skybender"],
+	"license": "CC0-1.0",
+	"icon": "assets/skybender-anglesnap/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["com.skybender.anglesnap.SkybenderAnglesnap"],
+		"client": ["com.skybender.anglesnap.client.SkybenderAnglesnapClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
