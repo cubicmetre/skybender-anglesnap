@@ -1,13 +1,14 @@
 package com.skybender.anglesnap.client;
 
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.skybender.anglesnap.SkybendEncoder;
 import com.skybender.anglesnap.SkybendSequence;
 import com.skybender.anglesnap.SkybenderTiming;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -25,25 +26,33 @@ public final class SkybendCommands {
 
 	public static void register() {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-			LiteralArgumentBuilder<FabricClientCommandSource> root = ClientCommands.literal("skybend")
-				.then(ClientCommands.literal("set")
-					.then(ClientCommands.argument("n", IntegerArgumentType.integer(1, 15))
-						.then(ClientCommands.argument("ox", IntegerArgumentType.integer())
-							.then(ClientCommands.argument("oz", IntegerArgumentType.integer())
+			LiteralArgumentBuilder<FabricClientCommandSource> root = literal("skybend")
+				.then(literal("set")
+					.then(argument("n", IntegerArgumentType.integer(1, 15))
+						.then(argument("ox", IntegerArgumentType.integer())
+							.then(argument("oz", IntegerArgumentType.integer())
 								.executes(SkybendCommands::set)))))
-				.then(ClientCommands.literal("time")
+				.then(literal("time")
 					.executes(ctx -> timeOrFire(ctx, false, true))
-					.then(ClientCommands.argument("tx", IntegerArgumentType.integer())
-						.then(ClientCommands.argument("tz", IntegerArgumentType.integer())
+					.then(argument("tx", IntegerArgumentType.integer())
+						.then(argument("tz", IntegerArgumentType.integer())
 							.executes(ctx -> timeOrFire(ctx, false, false)))))
-				.then(ClientCommands.literal("fire")
+				.then(literal("fire")
 					.executes(ctx -> timeOrFire(ctx, true, true))
-					.then(ClientCommands.argument("tx", IntegerArgumentType.integer())
-						.then(ClientCommands.argument("tz", IntegerArgumentType.integer())
+					.then(argument("tx", IntegerArgumentType.integer())
+						.then(argument("tz", IntegerArgumentType.integer())
 							.executes(ctx -> timeOrFire(ctx, true, false)))));
 
 			dispatcher.register(root);
 		});
+	}
+
+	private static LiteralArgumentBuilder<FabricClientCommandSource> literal(String name) {
+		return LiteralArgumentBuilder.literal(name);
+	}
+
+	private static <T> RequiredArgumentBuilder<FabricClientCommandSource, T> argument(String name, ArgumentType<T> type) {
+		return RequiredArgumentBuilder.argument(name, type);
 	}
 
 	private static int set(CommandContext<FabricClientCommandSource> ctx) {

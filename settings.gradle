@@ -10,3 +10,8 @@ pluginManagement {
 }
 
 rootProject.name = 'skybender-anglesnap'
+
+['mc12111', 'mc261', 'mc2611', 'mc2612', 'mc262', 'mc263'].each { target ->
+	include(target)
+	project(":${target}").projectDir = file("targets/${target}")
+}
