@@ -5,7 +5,7 @@
 	"name": "Skybender AngleSnap",
 	"description": "Client /skybend command that encodes nuke origin/target and plays the Scarpet look sequence",
 	"authors": ["Skybender"],
-	"license": "CC0-1.0",
+	"license": "GPL-3.0-only",
 	"icon": "assets/skybender-anglesnap/icon.png",
 	"environment": "*",
 	"entrypoints": {
