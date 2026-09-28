@@ -31,7 +31,7 @@ public final class EtaCountdown {
 			lastDisplayedSeconds = -1;
 			LocalPlayer player = Minecraft.getInstance().player;
 			if (player != null) {
-				player.sendOverlayMessage(Component.empty());
+				OverlayMessage.show(player, Component.empty());
 			}
 		}
 	}
@@ -54,7 +54,7 @@ public final class EtaCountdown {
 		int remaining = totalTicks - elapsed;
 		if (remaining <= 0) {
 			if (lastDisplayedSeconds != 0) {
-				player.sendOverlayMessage(Component.literal("ETA 00:00:00"));
+				OverlayMessage.show(player, Component.literal("ETA 00:00:00"));
 				lastDisplayedSeconds = 0;
 			}
 			active = false;
@@ -64,7 +64,7 @@ public final class EtaCountdown {
 		int seconds = (remaining + 19) / 20; // ceil(remaining / 20)
 		if (seconds != lastDisplayedSeconds) {
 			lastDisplayedSeconds = seconds;
-			player.sendOverlayMessage(Component.literal("ETA " + formatHms(seconds)));
+			OverlayMessage.show(player, Component.literal("ETA " + formatHms(seconds)));
 		}
 	}
 

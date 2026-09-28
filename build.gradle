@@ -1,73 +1,123 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id 'maven-publish'
+	id 'base'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}" apply false
+	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}" apply false
 }
 
-version = "${project.version}+${project.minecraft_version}"
+def supportedTargets = [
+	mc12111: [minecraftVersion: '1.21.11', fabricApiVersion: '0.141.6+1.21.11', javaVersion: 21, obfuscated: true],
+	mc261:   [minecraftVersion: '26.1',    fabricApiVersion: '0.145.1+26.1',     javaVersion: 25, obfuscated: false],
+	mc2611:  [minecraftVersion: '26.1.1',  fabricApiVersion: '0.145.4+26.1.1',   javaVersion: 25, obfuscated: false],
+	mc2612:  [minecraftVersion: '26.1.2',  fabricApiVersion: '0.155.3+26.1.2',   javaVersion: 25, obfuscated: false],
+	mc262:   [minecraftVersion: '26.2',    fabricApiVersion: '0.161.0+26.2',     javaVersion: 25, obfuscated: false],
+	mc263:   [minecraftVersion: '26.3',    fabricApiVersion: '0.161.0+26.3',     javaVersion: 25, obfuscated: false]
+]
 
-repositories {
-}
+subprojects {
+	def target = supportedTargets[name]
+	if (target == null) {
+		throw new GradleException("No Minecraft target is configured for project '${name}'")
+	}
 
-loom {
-	splitEnvironmentSourceSets()
+	apply plugin: target.obfuscated ? 'net.fabricmc.fabric-loom-remap' : 'net.fabricmc.fabric-loom'
+	apply plugin: 'maven-publish'
 
-	mods {
-		"skybender-anglesnap" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
+	group = rootProject.maven_group
+	version = "${rootProject.mod_version}+${target.minecraftVersion}"
+
+	base {
+		archivesName = rootProject.mod_id
+	}
+
+	loom {
+		splitEnvironmentSourceSets()
+
+		mods {
+			"skybender-anglesnap" {
+				sourceSet sourceSets.main
+				sourceSet sourceSets.client
+			}
+		}
+	}
+
+	sourceSets {
+		main {
+			java.setSrcDirs([rootProject.file('src/main/java')])
+			resources.setSrcDirs([rootProject.file('src/main/resources')])
+		}
+		client {
+			java.setSrcDirs([
+				rootProject.file('src/client/java'),
+				rootProject.file(target.obfuscated ? 'src/legacy/client/java' : 'src/modern/client/java')
+			])
+		}
+		test {
+			java.setSrcDirs([rootProject.file('src/test/java')])
+		}
+	}
+
+	dependencies {
+		minecraft "com.mojang:minecraft:${target.minecraftVersion}"
+
+		if (target.obfuscated) {
+			mappings loom.officialMojangMappings()
+			modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+			modImplementation "net.fabricmc.fabric-api:fabric-api:${target.fabricApiVersion}"
+		} else {
+			implementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+			implementation "net.fabricmc.fabric-api:fabric-api:${target.fabricApiVersion}"
+		}
+
+		testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	}
+
+	tasks.named('test', Test).configure {
+		useJUnitPlatform()
+	}
+
+	processResources {
+		def resourceProperties = [
+			version          : project.version,
+			minecraft_version: target.minecraftVersion,
+			loader_version   : rootProject.loader_version,
+			java_version     : target.javaVersion
+		]
+		inputs.properties(resourceProperties)
+
+		filesMatching('fabric.mod.json') {
+			expand(resourceProperties)
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		it.options.release = target.javaVersion
+	}
+
+	java {
+		withSourcesJar()
+
+		sourceCompatibility = JavaVersion.toVersion(target.javaVersion)
+		targetCompatibility = JavaVersion.toVersion(target.javaVersion)
+	}
+
+	jar {
+		from(rootProject.file('LICENSE')) {
+			rename { "${it}_${rootProject.mod_id}" }
+		}
+	}
+
+	publishing {
+		publications {
+			create('mavenJava', MavenPublication) {
+				from components.java
+			}
 		}
 	}
 }
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	testImplementation "org.junit.jupiter:junit-jupiter:5.11.4"
-	testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-}
-
-tasks.named('test', Test).configure {
-	useJUnitPlatform()
-}
-
-processResources {
-	def version = project.version
-	inputs.property "version", version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
-}
-
-java {
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
-}
-
-jar {
-	def projectName = project.name
-	inputs.property "projectName", projectName
-
-	from("LICENSE") {
-		rename { "${it}_$projectName"}
-	}
-}
-
-publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			from components.java
-		}
-	}
-
-	repositories {
-	}
+tasks.register('buildAll') {
+	group = 'build'
+	description = 'Builds a release JAR for every supported Minecraft version.'
+	dependsOn(subprojects.collect { it.tasks.named('build') })
 }

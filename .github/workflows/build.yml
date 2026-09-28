@@ -1,0 +1,26 @@
+name: Build all Minecraft targets
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Build every supported target
+        run: bash ./gradlew buildAll --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skybender-anglesnap-jars
+          path: |
+            mc*/build/libs/*.jar
+            !mc*/build/libs/*-sources.jar

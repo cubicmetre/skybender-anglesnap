@@ -13,9 +13,9 @@
 		"client": ["com.skybender.anglesnap.client.SkybenderAnglesnapClient"]
 	},
 	"depends": {
-		"fabricloader": ">=0.19.3",
-		"minecraft": "~26.2",
-		"java": ">=25",
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "${minecraft_version}",
+		"java": ">=${java_version}",
 		"fabric-api": "*"
 	}
 }
